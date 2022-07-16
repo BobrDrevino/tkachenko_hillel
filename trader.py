@@ -121,7 +121,7 @@ def sell_usd(how_many_usd):
         print(f"UNAVAILABLE, REQUIRED BALANCE USD {how_many_usd}, AVAILABLE {usd_bal}")
 
 
-# нужно решить с двумя знаками после запятой
+# нужно решить с остатком копеек
 def buy_usd_for_all_uah():
     all_balance = availble_balance()
     uah_bal = float(all_balance[0])
