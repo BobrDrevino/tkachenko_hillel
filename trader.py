@@ -29,7 +29,7 @@ def start_exchange_rate():
     return start_rate
 
 
-# done ОБНОВЛЕНИЕ КУРСА И ЕГО ЗАПИСЬ В ИЗМЕНЯЕМЫЙ  КОНФИГ
+# done ОБНОВЛЕНИЕ КУРСА И ЕГО ЗАПИСЬ В ИЗМЕНЯЕМЫЙ КОНФИГ
 def rate_update():
     """
     Function generates new rate in the XX.XX format and add new value in updated_config.json
@@ -124,16 +124,20 @@ def sell_usd(how_many_usd):
 # done ФУНЦКЦИЯ ДЛЯ ПОКУПКИ $ на все ГРИВНЫ
 def buy_usd_for_all_uah():
     all_balance = availble_balance()
-    uah_bal = float(all_balance[0])
+    uah_bal1 = float(all_balance[0])
     usd_bal = float(all_balance[1])
 
     with open('updated_config.json', 'r') as js:
         data = json.load(js)
     rate = data['exchange_rate']
 
-    if uah_bal > 0:
-        usd_bal += round((uah_bal / rate) - (uah_bal % rate), 2)
-        uah_bal = round(uah_bal % rate, 2)
+    if uah_bal1 > 0:
+        ua_b1 = uah_bal1 // rate            # Сколько целых $ влазит
+        uah_bal = round((uah_bal1 - (ua_b1 * rate))/100, 2)   # Остаток в UAH в копейках
+
+        ua_b2 = round(uah_bal1 - uah_bal, 2)   # Количество гривен, которые доступны под конвертацию без остатка копеек
+        usd_bal += round(ua_b2 / rate, 2)  # Количество целых $ и центов, которые можно купить
+
         difference = {"exchange_rate": rate, "uah": uah_bal, "usd": usd_bal, 'delta': 0.5}
         return change_config(difference)
     else:
