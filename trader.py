@@ -56,8 +56,8 @@ def change_config(changes):
     """
     ch_par = changes
     to_change = {'exchange_rate': ch_par['exchange_rate'],
-                 'uah': float(ch_par['uah']),
-                 'usd': float(ch_par['usd']),
+                 'uah': float(round(ch_par['uah'], 2)),
+                 'usd': float(round(ch_par['usd'], 2)),
                  'delta': ch_par['delta']}
 
     with open('updated_config.json', "w") as js:
@@ -94,7 +94,7 @@ def buy_usd(how_many_usd):
 
     if how_many_usd * rate <= uah_bal > 0:
         usd_bal += how_many_usd
-        uah_bal -= how_many_usd * rate
+        uah_bal -= round(how_many_usd * rate, 2)
         difference = {"exchange_rate": rate, "uah": uah_bal, "usd": usd_bal, 'delta': 0.5}
         return change_config(difference)
     else:
@@ -117,7 +117,7 @@ def sell_usd(how_many_usd):
 
     if how_many_usd <= usd_bal > 0:
         usd_bal -= how_many_usd
-        uah_bal += how_many_usd * rate
+        uah_bal += round(how_many_usd * rate, 2)
         difference = {"exchange_rate": rate, "uah": uah_bal, "usd": usd_bal, 'delta': 0.5}
         return change_config(difference)
     else:
