@@ -121,7 +121,7 @@ def sell_usd(how_many_usd):
         print(f"UNAVAILABLE, REQUIRED BALANCE USD {how_many_usd}, AVAILABLE {usd_bal}")
 
 
-# нужно решить с остатком копеек
+# done ФУНЦКЦИЯ ДЛЯ ПОКУПКИ $ на все ГРИВНЫ
 def buy_usd_for_all_uah():
     all_balance = availble_balance()
     uah_bal = float(all_balance[0])
@@ -132,8 +132,8 @@ def buy_usd_for_all_uah():
     rate = data['exchange_rate']
 
     if uah_bal > 0:
-        usd_bal += uah_bal / rate
-        uah_bal = 0
+        usd_bal += round((uah_bal / rate) - (uah_bal % rate), 2)
+        uah_bal = round(uah_bal % rate, 2)
         difference = {"exchange_rate": rate, "uah": uah_bal, "usd": usd_bal, 'delta': 0.5}
         return change_config(difference)
     else:
