@@ -3,7 +3,6 @@ from random import uniform
 from argparse import ArgumentParser
 
 
-# done ЗАГРУЗКА СТАРТОВОГО КОНФИГА И ГЕНЕРАЦИЯ ИЗМЕНЯЕМОГО КОНФИГА
 def load_start_config():
     """
     This function loads a json file with initial input data.
@@ -18,7 +17,6 @@ def load_start_config():
     return data
 
 
-# done ДЕМОНСТРАЦИЯ СТАРТОВОГО КУРСА
 def start_exchange_rate():
     """
     Function to show the starting exchange rate
@@ -29,7 +27,6 @@ def start_exchange_rate():
     return start_rate
 
 
-# done ОБНОВЛЕНИЕ КУРСА И ЕГО ЗАПИСЬ В ИЗМЕНЯЕМЫЙ КОНФИГ
 def rate_update():
     """
     Function generates new rate in the XX.XX format and add new value in updated_config.json
@@ -52,7 +49,6 @@ def rate_update():
     return new_rate
 
 
-# done ФУНКЦИЯ ДЛЯ ВНЕСЕНИЯ ИЗМЕНЕНИЙ В КОНФИГ ПОСЛЕ ТРАНЗАКЦИЙ
 def change_config(changes):
     """
     This function update config after any changes
@@ -68,7 +64,6 @@ def change_config(changes):
         json.dump(to_change, js)
 
 
-# done ФУНКЦИЯ ДЛЯ ДЕМОНСТРАЦИИ БАЛАНСА
 def availble_balance():
     """
     Balance check function
@@ -83,8 +78,12 @@ def availble_balance():
     return result
 
 
-# done ФУНКЦИЯ ДЛЯ ПОКУПКИ ХХХ $
 def buy_usd(how_many_usd):
+    """
+    Function to buy $
+    :param how_many_usd:
+    :return: new params for changeable config (dict)
+    """
     all_balance = availble_balance()
     uah_bal = all_balance[0]
     usd_bal = all_balance[1]
@@ -102,8 +101,12 @@ def buy_usd(how_many_usd):
         print(f"UNAVAILABLE, REQUIRED BALANCE UAH {how_many_usd * rate}, AVAILABLE {uah_bal}")
 
 
-# done ФУНКЦИЯ ДЛЯ ПРОДАЖИ XXX $
 def sell_usd(how_many_usd):
+    """
+    Function to sell $
+    :param how_many_usd:
+    :return: new params for changeable config (dict)
+    """
     all_balance = availble_balance()
     uah_bal = all_balance[0]
     usd_bal = all_balance[1]
@@ -121,8 +124,12 @@ def sell_usd(how_many_usd):
         print(f"UNAVAILABLE, REQUIRED BALANCE USD {how_many_usd}, AVAILABLE {usd_bal}")
 
 
-# done ФУНЦКЦИЯ ДЛЯ ПОКУПКИ $ на все ГРИВНЫ
+
 def buy_usd_for_all_uah():
+    """
+    Function to buy the maximum possible number of dollars
+    :return: new params for changeable config (dict)
+    """
     all_balance = availble_balance()
     uah_bal1 = float(all_balance[0])
     usd_bal = float(all_balance[1])
@@ -141,11 +148,15 @@ def buy_usd_for_all_uah():
         difference = {"exchange_rate": rate, "uah": uah_bal, "usd": usd_bal, 'delta': 0.5}
         return change_config(difference)
     else:
-        print(f'There is not enough UAH on the balance. Balance: {uah_bal}')
+        print(f'There is not enough UAH on the balance. Balance: {uah_bal1}')
 
 
-# done ФУНКЦИЯ ДЛЯ ПОКУПКИ ГРИВЕН ЗА ВСЕ $
+
 def buy_uah_for_all_usd():
+    """
+    Function to buy the UAH for all $
+    :return: new params for changeable config (dict)
+    """
     all_balance = availble_balance()
     uah_bal = float(all_balance[0])
     usd_bal = float(all_balance[1])
@@ -155,7 +166,7 @@ def buy_uah_for_all_usd():
     rate = data['exchange_rate']
 
     if usd_bal > 0:
-        uah_bal += usd_bal * rate
+        uah_bal += round(usd_bal * rate, 2)
         usd_bal = 0
         difference = {"exchange_rate": rate, "uah": uah_bal, "usd": usd_bal, 'delta': 0.5}
         return change_config(difference)
