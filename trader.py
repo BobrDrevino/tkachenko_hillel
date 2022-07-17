@@ -1,6 +1,7 @@
 import json
 from random import uniform
 from argparse import ArgumentParser
+import os.path
 
 
 def load_start_config():
@@ -32,7 +33,7 @@ def rate_update():
     Function generates new rate in the XX.XX format and add new value in updated_config.json
     :return: new rate (float)
     """
-    with open('updated_config.json', 'r') as js:
+    with open('config.json', 'r') as js:
         data = json.load(js)
 
         rate1 = data['exchange_rate']
@@ -69,11 +70,18 @@ def availble_balance():
     Balance check function
     :return: balance (list)
     """
-    with open('updated_config.json', 'r') as js:
-        data_balance = json.load(js)
-        bal_uah = float(data_balance['uah'])
-        bal_usd = float(data_balance['usd'])
-        result = [bal_uah, bal_usd]
+    if os.path.exists('updated_config.json'):
+        with open('updated_config.json', 'r') as js:
+            data_balance = json.load(js)
+            bal_uah = float(data_balance['uah'])
+            bal_usd = float(data_balance['usd'])
+            result = [bal_uah, bal_usd]
+    else:
+        with open('config.json', 'r') as js:
+            data_balance = json.load(js)
+            bal_uah = float(data_balance['uah'])
+            bal_usd = float(data_balance['usd'])
+            result = [bal_uah, bal_usd]
 
     return result
 
@@ -181,13 +189,15 @@ rate = parsers_command.add_parser('RATE')
 available = parsers_command.add_parser('AVAILABLE')
 buy_xxx = parsers_command.add_parser('BUY')
 sell_xxx = parsers_command.add_parser('SELL')
-buy_all = parsers_command.add_parser('BUY_ALL')
-sell_all = parsers_command.add_parser('SELL_ALL')
+buy_all = parsers_command.add_parser('BUY ALL')
+sell_all = parsers_command.add_parser('SELL ALL')
 next_rate = parsers_command.add_parser('NEXT')
 restart = parsers_command.add_parser('RESTART')
 
+
 buy_xxx.add_argument('amount', type=int)
 sell_xxx.add_argument('amount', type=int)
+
 
 args2 = args.parse_args()
 
@@ -202,21 +212,20 @@ elif args2.command == 'AVAILABLE':
     usd_bal = args_balance[1]
     print(f'USD {usd_bal} | UAH {uah_bal}')
 
+elif args2.command == "BUY ALL":
+    buy_usd_for_all_uah()
+
+elif args2.command == "SELL ALL":
+    buy_uah_for_all_usd()
+
 elif args2.command == 'BUY':
     buy_usd(args2.amount)
 
 elif args2.command == "SELL":
     sell_usd(args2.amount)
 
-elif args2.command == "BUY_ALL":
-    buy_usd_for_all_uah()
-
-elif args2.command == "SELL_ALL":
-    buy_uah_for_all_usd()
-
 elif args2.command == "NEXT":
     rate_update()
-    print(f'New exchange rate is: {rate_update()}')
 
 elif args2.command == "RESTART":
     load_start_config()
