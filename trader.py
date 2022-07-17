@@ -23,8 +23,14 @@ def start_exchange_rate():
     Function to show the starting exchange rate
     :return: exchange rate at start (int)
     """
-    rate_1 = load_start_config()
-    start_rate = rate_1['exchange_rate']
+    if os.path.exists('updated_config.json'):
+        with open('updated_config.json', 'r') as js:
+            data = json.load(js)
+            start_rate = data['exchange_rate']
+    else:
+        with open('config.json', 'r') as js:
+            data = json.load(js)
+            start_rate = data['exchange_rate']
     return start_rate
 
 
@@ -92,6 +98,7 @@ def buy_usd(how_many_usd):
     :param how_many_usd:
     :return: new params for changeable config (dict)
     """
+    how_many = int(how_many_usd)
     all_balance = availble_balance()
     uah_bal = all_balance[0]
     usd_bal = all_balance[1]
@@ -100,13 +107,13 @@ def buy_usd(how_many_usd):
         data = json.load(js)
     rate = data['exchange_rate']
 
-    if how_many_usd * rate <= uah_bal > 0:
-        usd_bal += how_many_usd
-        uah_bal -= round(how_many_usd * rate, 2)
+    if how_many * rate <= uah_bal > 0:
+        usd_bal += how_many
+        uah_bal -= round(how_many * rate, 2)
         difference = {"exchange_rate": rate, "uah": uah_bal, "usd": usd_bal, 'delta': 0.5}
         return change_config(difference)
     else:
-        print(f"UNAVAILABLE, REQUIRED BALANCE UAH {how_many_usd * rate}, AVAILABLE {uah_bal}")
+        print(f"UNAVAILABLE, REQUIRED BALANCE UAH {how_many * rate}, AVAILABLE {uah_bal}")
 
 
 def sell_usd(how_many_usd):
@@ -115,6 +122,7 @@ def sell_usd(how_many_usd):
     :param how_many_usd:
     :return: new params for changeable config (dict)
     """
+    how_many = int(how_many_usd)
     all_balance = availble_balance()
     uah_bal = all_balance[0]
     usd_bal = all_balance[1]
@@ -123,14 +131,13 @@ def sell_usd(how_many_usd):
         data = json.load(js)
     rate = data['exchange_rate']
 
-    if how_many_usd <= usd_bal > 0:
-        usd_bal -= how_many_usd
-        uah_bal += round(how_many_usd * rate, 2)
+    if how_many <= usd_bal > 0:
+        usd_bal -= how_many
+        uah_bal += round(how_many * rate, 2)
         difference = {"exchange_rate": rate, "uah": uah_bal, "usd": usd_bal, 'delta': 0.5}
         return change_config(difference)
     else:
-        print(f"UNAVAILABLE, REQUIRED BALANCE USD {how_many_usd}, AVAILABLE {usd_bal}")
-
+        print(f"UNAVAILABLE, REQUIRED BALANCE USD {how_many}, AVAILABLE {usd_bal}")
 
 
 def buy_usd_for_all_uah():
@@ -157,7 +164,6 @@ def buy_usd_for_all_uah():
         return change_config(difference)
     else:
         print(f'There is not enough UAH on the balance. Balance: {uah_bal1}')
-
 
 
 def buy_uah_for_all_usd():
@@ -194,17 +200,14 @@ sell_all = parsers_command.add_parser('SELL ALL')
 next_rate = parsers_command.add_parser('NEXT')
 restart = parsers_command.add_parser('RESTART')
 
-
-buy_xxx.add_argument('amount', type=int)
-sell_xxx.add_argument('amount', type=int)
-
+buy_xxx.add_argument('amount')
+sell_xxx.add_argument('amount')
 
 args2 = args.parse_args()
 
-
 if args2.command == 'RATE':
     args_rate = start_exchange_rate()
-    print(f'Start exchange rate is: {args_rate}')
+    print(args_rate)
 
 elif args2.command == 'AVAILABLE':
     args_balance = availble_balance()
@@ -212,17 +215,20 @@ elif args2.command == 'AVAILABLE':
     usd_bal = args_balance[1]
     print(f'USD {usd_bal} | UAH {uah_bal}')
 
-elif args2.command == "BUY ALL":
-    buy_usd_for_all_uah()
-
-elif args2.command == "SELL ALL":
-    buy_uah_for_all_usd()
-
 elif args2.command == 'BUY':
-    buy_usd(args2.amount)
+    try:
+        if type(int(args2.amount)) is int:
+            buy_usd(args2.amount)
+    except ValueError:
+        buy_usd_for_all_uah()
+
 
 elif args2.command == "SELL":
-    sell_usd(args2.amount)
+    try:
+        if type(int(args2.amount)) is int:
+            sell_usd(args2.amount)
+    except ValueError:
+        buy_uah_for_all_usd()
 
 elif args2.command == "NEXT":
     rate_update()
