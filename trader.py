@@ -4,47 +4,40 @@ from argparse import ArgumentParser
 import os.path
 
 
+def json_read(filename):
+    """
+    For reading config.json and updated_config.json
+    :return: k:v from json (dict)
+    """
+    try:
+        with open(filename, 'r') as js:
+            data = json.load(js)
+            return data
+    except FileNotFoundError:
+        with open('updated_config.json', "w") as js:
+            json.dump(json_read('config.json'), js)
+            return json_read('config.json')
+
+
+def json_write(dif):
+    """
+    For writing new k:v to updated_config.json
+    :param dif: dict with new params
+    """
+    with open('updated_config.json', 'w') as js:
+        json.dump(dif, js)
+
+
 def load_start_config():
     """
     This function loads a json file with initial input data.
     :return: config with rate, amount UAH, amount USD and delta at start (dict)
     """
-    with open('config.json', 'r') as js:
-        data = json.load(js)
+    json_read('config.json')
 
-    with open('updated_config.json', "w") as js:
-        json.dump(data, js)
+    json_write(json_read('config.json'))
 
-    return data
-
-
-def cfg_json_read():
-    """
-    For reading config.json
-    :return: k:v from config.json (dict)
-    """
-    with open('config.json', 'r') as js:
-        data = json.load(js)
-        return data
-
-
-def up_cfg_json_read():
-    """
-    For reading updated_config.json
-    :return: k:v from updated_config.json (dict)
-    """
-    with open('updated_config.json', 'r') as js:
-        data = json.load(js)
-        return data
-
-
-def up_cfg_json_write(dif):
-    """
-    For writing new k:v to updated_config.json
-    :param dict with new k:v
-    """
-    with open('updated_config.json', 'w') as js:
-        json.dump(dif, js)
+    return json_read('config.json')
 
 
 def start_exchange_rate():
@@ -53,9 +46,9 @@ def start_exchange_rate():
     :return: exchange rate at start (int)
     """
     if os.path.exists('updated_config.json'):
-        start_rate = up_cfg_json_read()['exchange_rate']
+        start_rate = json_read('updated_config.json')['exchange_rate']
     else:
-        start_rate = cfg_json_read()['exchange_rate']
+        start_rate = json_read('config.json')['exchange_rate']
     return start_rate
 
 
@@ -64,32 +57,23 @@ def rate_update():
     Function generates new rate in the XX.XX format and add new value in updated_config.json
     :return: new rate (float)
     """
-
-    rate1 = cfg_json_read()['exchange_rate']
-    uah1 = cfg_json_read()['uah']
-    usd1 = cfg_json_read()['usd']
-    delta1 = cfg_json_read()['delta']
-
+    data_config = json_read('config.json')
+    rate1 = data_config['exchange_rate']
+    delta1 = data_config['delta']
     new_rate = round(uniform((rate1 - delta1), (rate1 + delta1)), 2)
-    dif = {"exchange_rate": new_rate, "uah": uah1, "usd": usd1, "delta": delta1}
 
-    up_cfg_json_write(dif)
+    if os.path.exists('updated_config.json'):
+        data_up_config = json_read('updated_config.json')
+        dif = {"exchange_rate": new_rate,
+               "uah": data_up_config['uah'],
+               "usd": data_up_config['usd'],
+               "delta": delta1}
+        json_write(dif)
+    else:
+        dif = {"exchange_rate": new_rate, "uah": data_config['uah'], "usd": data_config['usd'], "delta": delta1}
+        json_write(dif)
 
     return new_rate
-
-
-def change_config(changes):
-    """
-    This function update config after any changes
-    :param : dict with changes after any transactions
-    """
-    ch_par = changes
-    to_change = {'exchange_rate': ch_par['exchange_rate'],
-                 'uah': float(round(ch_par['uah'], 2)),
-                 'usd': float(round(ch_par['usd'], 2)),
-                 'delta': ch_par['delta']}
-
-    up_cfg_json_write(to_change)
 
 
 def availble_balance():
@@ -97,18 +81,25 @@ def availble_balance():
     Balance check function
     :return: balance (list)
     """
+
     if os.path.exists('updated_config.json'):
-
-        bal_uah = float(up_cfg_json_read()['uah'])
-        bal_usd = float(up_cfg_json_read()['usd'])
+        data_up_config = json_read('updated_config.json')
+        bal_uah = float(data_up_config['uah'])
+        bal_usd = float(data_up_config['usd'])
         result = [bal_uah, bal_usd]
-    else:
 
-        bal_uah = float(cfg_json_read()['uah'])
-        bal_usd = float(cfg_json_read()['usd'])
+    else:
+        data_config = json_read('config.json')
+        bal_uah = float(data_config['uah'])
+        bal_usd = float(data_config['usd'])
         result = [bal_uah, bal_usd]
 
     return result
+
+
+all_balance = availble_balance()
+data_config = json_read('config.json')
+data_up_config = json_read('updated_config.json')
 
 
 def buy_usd(how_many_usd):
@@ -118,16 +109,18 @@ def buy_usd(how_many_usd):
     :return: new params for changeable config (dict)
     """
     how_many = int(how_many_usd)
-    all_balance = availble_balance()
     uah_bal = all_balance[0]
     usd_bal = all_balance[1]
-    rate = up_cfg_json_read()['exchange_rate']
+    rate = data_up_config['exchange_rate']
 
     if how_many * rate <= uah_bal > 0:
         usd_bal += how_many
         uah_bal -= round(how_many * rate, 2)
-        difference = {"exchange_rate": rate, "uah": uah_bal, "usd": usd_bal, 'delta': 0.5}
-        change_config(difference)
+        difference = {"exchange_rate": rate,
+                      "uah": uah_bal,
+                      "usd": usd_bal,
+                      'delta': 0.5}
+        json_write(difference)
     else:
         print(f"UNAVAILABLE, REQUIRED BALANCE UAH {how_many * rate}, AVAILABLE {uah_bal}")
 
@@ -139,16 +132,15 @@ def sell_usd(how_many_usd):
     :return: new params for changeable config (dict)
     """
     how_many = int(how_many_usd)
-    all_balance = availble_balance()
     uah_bal = all_balance[0]
     usd_bal = all_balance[1]
-    rate = up_cfg_json_read()['exchange_rate']
+    rate = data_up_config['exchange_rate']
 
-    if how_many <= usd_bal > 0:
+    if how_many <= usd_bal:
         usd_bal -= how_many
         uah_bal += round(how_many * rate, 2)
         difference = {"exchange_rate": rate, "uah": uah_bal, "usd": usd_bal, 'delta': 0.5}
-        change_config(difference)
+        json_write(difference)
     else:
         print(f"UNAVAILABLE, REQUIRED BALANCE USD {how_many}, AVAILABLE {usd_bal}")
 
@@ -158,10 +150,10 @@ def buy_usd_for_all_uah():
     Function to buy the maximum possible number of dollars
     :return: new params for changeable config (dict)
     """
-    all_balance = availble_balance()
+
     uah_bal1 = float(all_balance[0])
     usd_bal = float(all_balance[1])
-    rate = up_cfg_json_read()['exchange_rate']
+    rate = data_up_config['exchange_rate']
 
     if uah_bal1 > 0:
         ua_b1 = uah_bal1 // rate  # Сколько целых $ влазит
@@ -171,7 +163,7 @@ def buy_usd_for_all_uah():
         usd_bal += round(ua_b2 / rate, 2)  # Количество целых $ и центов, которые можно купить
 
         difference = {"exchange_rate": rate, "uah": uah_bal, "usd": usd_bal, 'delta': 0.5}
-        change_config(difference)
+        json_write(difference)
 
 
 def buy_uah_for_all_usd():
@@ -179,16 +171,15 @@ def buy_uah_for_all_usd():
     Function to buy the UAH for all $
     :return: new params for changeable config (dict)
     """
-    all_balance = availble_balance()
     uah_bal = float(all_balance[0])
     usd_bal = float(all_balance[1])
-    rate = up_cfg_json_read()['exchange_rate']
+    rate = data_up_config['exchange_rate']
 
     if usd_bal > 0:
         uah_bal += round(usd_bal * rate, 2)
         usd_bal = 0
         difference = {"exchange_rate": rate, "uah": uah_bal, "usd": usd_bal, 'delta': 0.5}
-        change_config(difference)
+        json_write(difference)
 
 
 args = ArgumentParser()
