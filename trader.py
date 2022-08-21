@@ -97,6 +97,7 @@ def buy_usd(how_many_usd):
         print(f"UNAVAILABLE, REQUIRED BALANCE UAH {how_many * rate}, AVAILABLE {uah_bal}")
 
 
+
 def sell_usd(how_many_usd):
     how_many = int(how_many_usd)
     uah_bal = all_balance[0]
